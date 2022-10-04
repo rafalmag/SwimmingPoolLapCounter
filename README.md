@@ -18,3 +18,7 @@ Wiring:
 | BUSY          | D7         |
 
 ![wiring](guide-wiring-eink-epaper-module-schematics-diagram-14core-768x633.jpg "wiring")
+
+
+TODO:
+- consider adding aa fonts from ST7735_antialiased_rre_fonts
