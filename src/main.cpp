@@ -1,119 +1,96 @@
-/*demo for MH-ET LVIE 1.54Black Epaper*/
-/*
-*connection:
-Board.UNO/2560.etc-------------epaper module
-D7--------------------------------Busy
-D8--------------------------------Reset
-D9--------------------------------D/C
-D10-------------------------------CS
-D11-------------------------------SDI
-D13-------------------------------SCLK
-VCC-------------------------------VCC
-GND------------------------------GND
-*Set the toggle switch to the correct gear position according to the supply voltage.
-*SPI:4line-wire
-*/
-#include <epd1in54.h>
-#include <epdpaint.h>
 
-#define COLORED     1
-#define UNCOLORED   0
+#include <SPI.h>
+#include <EPD1in54.h>
+#include <EPDPaint.h>
+#include "imagedata.h"
+
+#define COLORED     0
+#define UNCOLORED   1
 
 /**
-  * Due to RAM not enough in Arduino UNO or NANO a pattern buffer is not allowed.
-  * In this case, a smaller image buffer is allocated and you have to 
+  * Due to RAM not enough in Arduino UNO, a frame buffer is not allowed.
+  * In this case, a smaller image buffer is allocated and you have to
   * update a partial display several times.
   * 1 byte = 8 pixels, therefore you have to set 8*N pixels at a time.
   */
 unsigned char image[1024];
-Paint paint(image, 0, 0);    // width should be the multiple of 8 
-Epd epd;
-unsigned long time_start_ms;
-unsigned long time_now_s;
+EPDPaint paint(image, 0, 0);    // width should be the multiple of 8
+EPD1in54 epd; // default reset: 8, dc: 9, cs: 10, busy: 7
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  if (epd.Init(lut_full_update) != 0) {
-      Serial.print("e-Paper init failed");
-      return;
+
+  if (epd.init(lutFullUpdate) != 0) {
+    Serial.print("e-Paper init failed");
+    return;
   }
 
-  /** 
+  /**
    *  there are 2 memory areas embedded in the e-paper display
    *  and once the display is refreshed, the memory area will be auto-toggled,
-   *  i.e. the next action of SetPatternMemory will set the other memory area
-   *  therefore you have to clear the pattern memory twice.
+   *  i.e. the next action of SetFrameMemory will set the other memory area
+   *  therefore you have to clear the frame memory twice.
    */
-  epd.ClearPatternMemory(0xFF);   // bit set = white, bit reset = black
-  epd.DisplayPattern();
-  epd.ClearPatternMemory(0xFF);   // bit set = white, bit reset = black
-  epd.DisplayPattern();
+  epd.clearFrameMemory(0xFF);   // bit set = white, bit reset = black
+  epd.displayFrame();
+  epd.clearFrameMemory(0xFF);   // bit set = white, bit reset = black
+  epd.displayFrame();
 
-  paint.SetRotate(ROTATE_0);
-  paint.SetWidth(200);
-  paint.SetHeight(24);
+  paint.setRotate(ROTATE_0);
+  paint.setWidth(200);
+  paint.setHeight(24);
 
   /* For simplicity, the arguments are explicit numerical coordinates */
-  paint.Clear(COLORED);
-  paint.DrawStringAt(30, 4, "Hello world!", &Font16, UNCOLORED);
-  epd.SetPatternMemory(paint.GetImage(), 0, 10, paint.GetWidth(), paint.GetHeight());
-  
-  paint.Clear(UNCOLORED);
-  paint.DrawStringAt(16, 4, "---MH---", &Font24, COLORED);
-  epd.SetPatternMemory(paint.GetImage(), 0, 30, paint.GetWidth(), paint.GetHeight());
+  paint.clear(COLORED);
+  paint.drawStringAt(30, 4, "SwimmingPoolLapCounter", &Font16, UNCOLORED);
+  epd.setFrameMemory(paint.getImage(), 0, 10, paint.getWidth(), paint.getHeight());
 
-  paint.SetWidth(64);
-  paint.SetHeight(64);
-  
-  paint.Clear(UNCOLORED);
-  paint.DrawRectangle(0, 0, 40, 50, COLORED);
-  paint.DrawLine(0, 0, 40, 50, COLORED);
-  paint.DrawLine(40, 0, 0, 50, COLORED);
-  epd.SetPatternMemory(paint.GetImage(), 16, 60, paint.GetWidth(), paint.GetHeight());
+  paint.clear(UNCOLORED);
+  paint.drawStringAt(30, 4, "by Rafal Magda", &Font16, COLORED);
+  epd.setFrameMemory(paint.getImage(), 0, 30, paint.getWidth(), paint.getHeight());
 
-  paint.Clear(UNCOLORED);
-  paint.DrawCircle(32, 32, 30, COLORED);
-  epd.SetPatternMemory(paint.GetImage(), 120, 60, paint.GetWidth(), paint.GetHeight());
-
-  paint.Clear(UNCOLORED);
-  paint.DrawFilledRectangle(0, 0, 40, 50, COLORED);
-  epd.SetPatternMemory(paint.GetImage(), 16, 130, paint.GetWidth(), paint.GetHeight());
-
-  paint.Clear(UNCOLORED);
-  paint.DrawFilledCircle(32, 32, 30, COLORED);
-  epd.SetPatternMemory(paint.GetImage(), 120, 130, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayPattern();
-
+  epd.displayFrame();
   delay(2000);
 
-  if (epd.Init(lut_partial_update) != 0) {
-      Serial.print("e-Paper init failed");
-      return;
-  }
-
-  /** 
+  /**
    *  there are 2 memory areas embedded in the e-paper display
    *  and once the display is refreshed, the memory area will be auto-toggled,
-   *  i.e. the next action of SetPatternMemory will set the other memory area
-   *  therefore you have to set the pattern memory and refresh the display twice.
+   *  i.e. the next action of SetFrameMemory will set the other memory area
+   *  therefore you have to clear the frame memory twice.
    */
+  epd.clearFrameMemory(0xFF);   // bit set = white, bit reset = black
+  epd.displayFrame();
+  epd.clearFrameMemory(0xFF);   // bit set = white, bit reset = black
+  epd.displayFrame();
 
 }
 
+
 void loop() {
-  // put your main code here, to run repeatedly:
-  char time_string[] = {'0', '0', ':', '0', '0', '\0'};
 
-  paint.SetWidth(90);
-  paint.SetHeight(32);
-  paint.SetRotate(ROTATE_0);
+  
+  paint.setWidth(15);
+  paint.setHeight(15);
 
-  paint.Clear(UNCOLORED);
-  paint.DrawStringAt(0, 4, time_string, &Font24, COLORED);
-  epd.SetPatternMemory(paint.GetImage(), 8, 128, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayPattern();
+  paint.clear(UNCOLORED);
+  // paint.drawStringAt(0, 4, time_string, &Font24, COLORED);
 
-  delay(500);
+  paint.drawFilledRectangle(2, 2, 10, 10, COLORED);
+  paint.drawPixel(1, 1, UNCOLORED);
+  paint.drawPixel(2, 2, UNCOLORED);
+  paint.drawPixel(3, 3, UNCOLORED);
+  paint.drawPixel(4, 4, UNCOLORED);
+  paint.drawPixel(5, 5, UNCOLORED);
+
+  // set first memory area
+  epd.setFrameMemory(paint.getImage(), 0, 0, paint.getWidth(), paint.getHeight());
+  epd.displayFrame();
+
+  // set second memory area
+  epd.setFrameMemory(paint.getImage(), 5, 50, paint.getWidth(), paint.getHeight());
+  epd.displayFrame();
+
+  delay(2000);
 }
 
