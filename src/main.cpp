@@ -4,7 +4,7 @@
 #include <EPDPaint.h>
 
 #include "RREFont.h"
-#include "rre_fixed_8x16.h"
+#include "rre_term_10x16.h"
 
 RREFont font;
 
@@ -26,26 +26,22 @@ EPD1in54 epd;                // default reset: 8, dc: 9, cs: 10, busy: 7
 
 void customRect(int x, int y, int w, int h, int c)
 {
-  paint.setWidth(w);
+  int extra_x = x % 8;
+  int new_x = x - extra_x;
+
+  paint.setWidth(w + extra_x);
   paint.setHeight(h);
 
   paint.clear(UNCOLORED);
 
-  paint.drawFilledRectangle(0, 0, w - 1, h - 1, c);
-  epd.setFrameMemory(paint.getImage(), x, y, paint.getWidth(), paint.getHeight());
+  paint.drawFilledRectangle(0, 0, w - 1 + extra_x, h - 1, c);
+  epd.setFrameMemory(paint.getImage(), new_x, y, paint.getWidth(), paint.getHeight());
   return;
 }
 
-void setup()
+void rmInit()
 {
-  // put your setup code here, to run once:
-  Serial.begin(9600);
-
-  if (epd.init(lutFullUpdate) != 0)
-  {
-    Serial.print("e-Paper init failed");
-    return;
-  }
+  // init-RM
 
   /**
    *  there are 2 memory areas embedded in the e-paper display
@@ -74,6 +70,8 @@ void setup()
   epd.displayFrame();
   delay(2000);
 
+  // init-RM end
+
   /**
    *  there are 2 memory areas embedded in the e-paper display
    *  and once the display is refreshed, the memory area will be auto-toggled,
@@ -85,12 +83,8 @@ void setup()
   epd.clearFrameMemory(0xFF); // bit set = white, bit reset = black
   epd.displayFrame();
 
-  font.init(customRect, SCR_WD, SCR_HT); // custom fillRect function and screen width and height values
-  font.setFont(&rre_fixed_8x16);
-  font.setColor(COLORED);
   font.setScale(4);
-  font.setBold(1);
-  // font.setSpacing(1);
+  font.setSpacing(4); // scala * spacing must be a multiple of 8...
 
   font.printStr(ALIGN_CENTER, 10, "1234"); // center
   epd.displayFrame();
@@ -98,29 +92,73 @@ void setup()
   epd.displayFrame();
 }
 
+void setup()
+{
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+
+  if (epd.init(lutFullUpdate) != 0)
+  {
+    Serial.print("e-Paper init failed");
+    return;
+  }
+
+  font.init(customRect, SCR_WD, SCR_HT); // custom fillRect function and screen width and height values
+  font.setColor(COLORED, UNCOLORED);
+  font.setFont(&rre_term_10x16);
+
+  // rmInit();
+
+  // if analog input pin 0 is unconnected, random analog
+  // noise will cause the call to randomSeed() to generate
+  // different seed numbers each time the sketch runs.
+  // randomSeed() will then shuffle the random function.
+  randomSeed(analogRead(0));
+}
+
+char buf[10];
+int randNumber;
+
 void loop()
 {
+  Serial.print("New value:");
 
-  // paint.setWidth(15);
-  // paint.setHeight(15);
+  epd.clearFrameMemory(0xFF); // bit set = white, bit reset = black
 
-  // paint.clear(UNCOLORED);
-  // // paint.drawStringAt(0, 4, time_string, &Font24, COLORED);
-
-  // paint.drawFilledRectangle(2, 2, 10, 10, COLORED);
-  // paint.drawPixel(1, 1, UNCOLORED);
-  // paint.drawPixel(2, 2, UNCOLORED);
-  // paint.drawPixel(3, 3, UNCOLORED);
-  // paint.drawPixel(4, 4, UNCOLORED);
-  // paint.drawPixel(5, 5, UNCOLORED);
-
-  // // set first memory area
-  // epd.setFrameMemory(paint.getImage(), 0, 0, paint.getWidth(), paint.getHeight());
-  // epd.displayFrame();
-
-  // // set second memory area
-  // epd.setFrameMemory(paint.getImage(), 5, 50, paint.getWidth(), paint.getHeight());
-  // epd.displayFrame();
-
+  randNumber = random(1, 5); // inclusive, exclusive
+  memset(buf, 0x00, sizeof(buf));
+  if (randNumber == 1)
+  {
+    itoa(random(1, 4), buf, 10);
+    font.setFont(&rre_term_10x16); // set font resets spacing
+    font.setScale(10);
+    font.printStr(ALIGN_CENTER, (200 - 10 * 16) / 2, buf);
+  }
+  else if (randNumber == 2)
+  {
+    itoa(random(10, 99), buf, 10);
+    font.setFont(&rre_term_10x16);
+    font.setScale(6);
+    font.setSpacing(4); // scala * spacing must be a multiple of 8...
+    font.printStr(ALIGN_CENTER, 48, buf);
+  }
+  else if (randNumber == 3)
+  {
+    itoa(random(100, 999), buf, 10);
+    font.setFont(&rre_term_10x16);
+    font.setScale(6);
+    font.setSpacing(4); // scala * spacing must be a multiple of 8...
+    font.printStr(ALIGN_CENTER, (200 - 6 * 16) / 2, buf);
+  }
+  else if (randNumber == 4)
+  {
+    itoa(random(1000, 9999), buf, 10);
+    font.setFont(&rre_term_10x16);
+    font.setScale(4);
+    font.setSpacing(4); // scala * spacing must be a multiple of 8...
+    font.printStr(ALIGN_CENTER, 64, buf);
+  }
+  Serial.println(buf);
+  epd.displayFrame();
   delay(2000);
 }
