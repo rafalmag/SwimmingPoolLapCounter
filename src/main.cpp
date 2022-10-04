@@ -84,11 +84,10 @@ void rmInit()
   epd.displayFrame();
 
   font.setScale(4);
-  font.setSpacing(4); // scala * spacing must be a multiple of 8...
-
-  font.printStr(ALIGN_CENTER, 10, "1234"); // center
+  font.setSpacing(4);
+  font.printStr(ALIGN_CENTER, 10, "1234");
   epd.displayFrame();
-  font.printStr(ALIGN_CENTER, 50, "5678"); // center
+  font.printStr(ALIGN_CENTER, 50, "5678");
   epd.displayFrame();
 }
 
@@ -121,44 +120,48 @@ int randNumber;
 
 void loop()
 {
-  Serial.print("New value:");
+  Serial.print("\nNew value:");
 
   epd.clearFrameMemory(0xFF); // bit set = white, bit reset = black
 
-  randNumber = random(1, 5); // inclusive, exclusive
+  randNumber = random(1, 6); // inclusive, exclusive
   memset(buf, 0x00, sizeof(buf));
   if (randNumber == 1)
   {
     itoa(random(1, 4), buf, 10);
+    Serial.print(buf);
     font.setFont(&rre_term_10x16); // set font resets spacing
-    font.setScale(10);
-    font.printStr(ALIGN_CENTER, (200 - 10 * 16) / 2, buf);
+    font.setScale(10, 10);
+    font.printStr(ALIGN_CENTER, 20, buf);
   }
-  else if (randNumber == 2)
+  else if (randNumber == 2 || randNumber == 5)
   {
     itoa(random(10, 99), buf, 10);
+    Serial.print(buf);
     font.setFont(&rre_term_10x16);
-    font.setScale(6);
-    font.setSpacing(4); // scala * spacing must be a multiple of 8...
-    font.printStr(ALIGN_CENTER, 48, buf);
+    font.setScale(8);
+    font.setSpacing(4); 
+    font.printStr(ALIGN_CENTER, 40, buf);
   }
   else if (randNumber == 3)
   {
     itoa(random(100, 999), buf, 10);
+    Serial.print(buf);
     font.setFont(&rre_term_10x16);
-    font.setScale(6);
-    font.setSpacing(4); // scala * spacing must be a multiple of 8...
-    font.printStr(ALIGN_CENTER, (200 - 6 * 16) / 2, buf);
+    font.setScale(5, 7);
+    font.setSpacing(4);
+    font.printStr(ALIGN_CENTER, 52, buf);
   }
   else if (randNumber == 4)
   {
     itoa(random(1000, 9999), buf, 10);
+    Serial.print(buf);
     font.setFont(&rre_term_10x16);
-    font.setScale(4);
-    font.setSpacing(4); // scala * spacing must be a multiple of 8...
-    font.printStr(ALIGN_CENTER, 64, buf);
+    font.setScale(4, 6);
+    font.setSpacing(4);
+    font.printStr(ALIGN_CENTER, 48, buf);
   }
-  Serial.println(buf);
+  Serial.print(" OK");
   epd.displayFrame();
   delay(2000);
 }
