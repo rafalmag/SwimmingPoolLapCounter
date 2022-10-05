@@ -103,7 +103,8 @@ void setup()
   }
 
   font.init(customRect, SCR_WD, SCR_HT); // custom fillRect function and screen width and height values
-  font.setColor(COLORED, UNCOLORED);
+  // font.setColor(COLORED, UNCOLORED); //this clears the background, but is 2x slower
+  font.setColor(COLORED); // this requires explicit cleanup
   font.setFont(&rre_term_10x16);
 
   // rmInit();
@@ -122,6 +123,7 @@ void loop()
 {
   Serial.print("\nNew value:");
 
+// consider use of this every %10 laps, but then consider font.setColor(COLORED, UNCOLORED) near line 106
   epd.clearFrameMemory(0xFF); // bit set = white, bit reset = black
 
   randNumber = random(1, 6); // inclusive, exclusive
