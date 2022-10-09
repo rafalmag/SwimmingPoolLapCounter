@@ -11,14 +11,14 @@
 ![MH-ET LIVE 1.54 e-paper module](docs/mh-et-black_white.png "MH-ET LIVE 1.54 e-paper module")
 ![MH-ET LIVE 1.54 e-paper module](docs/mh-et-back.png "MH-ET LIVE 1.54 e-paper module")
 
-- active buzzer (3.3-5V VCC (2mA when it beeps), GND, IN=3.3V)
- Consider: on/off toggle (hardware switch and maybe 600-1000Ohm variable resistor for VCC to adjust buzzer volume)
+- active buzzer (5V VCC (2mA when it beeps), GND)
+ Consider: on/off toggle (hardware switch and maybe 1k-2kOhm variable resistor for VCC to adjust buzzer volume)
  IO pin connected via D4 .
 
 ![buzzer top](docs/buzzer1.png "buzzer top")
 ![buzzer bottom](docs/buzzer2.png "buzzer bottom")
 
- - red 5mm led (2.2V, 10mA) (nano can output 40mA per IO pin, so it would be ok), connected via 150Ohm resistor to D5
+ - red 5mm led (2.2V, 10mA) (nano can output 40mA per IO pin, so it would be ok), connected via 330 Ohm resistor to D5
 
  - small powerbank (with 18650 battery, USB charging input and output - to power the nano and PCB)
 

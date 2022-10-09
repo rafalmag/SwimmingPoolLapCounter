@@ -10,6 +10,7 @@
 #include <Button.h>
 #include <ButtonEventCallback.h>
 #include <CapacitiveButton.h>
+#include "AnalogPin.h"
 
 RREFont font;
 
@@ -29,6 +30,9 @@ EPD1in54 epd;                // default reset: 8, dc: 9, cs: 10, busy: 7
 // D4 and D5
 #define BUZZER_PIN 4
 #define LED_PIN 5
+
+#define THRESHOLD_PIN A3
+AnalogPin thresholdPin(THRESHOLD_PIN);
 
 // A4 and A5
 // CapacitiveSensor   cs_4_2 = CapacitiveSensor(A4,A2);
@@ -112,10 +116,9 @@ void rmInit()
 // This function can be left out if the defaults are acceptable - just don't call configureButton
 void configureCapacitiveButton(CapacitiveSensor &capSense)
 {
-
   // Set the capacitive sensor to timeout after 300ms
   capSense.set_CS_Timeout_Millis(300);
-  // Set the capacitive sensor to auto-calibrate every 10secs
+  // Set the capacitive sensor to auto-calibrate every 6secs
   capSense.set_CS_AutocaL_Millis(6000);
 }
 void dispNumber(int number);
@@ -150,6 +153,16 @@ void onHoldCallbackFunction(Button &btn, uint_least16_t duration)
   delay(250);
 }
 
+
+long threshold;
+void setButtonThreshold()
+{
+  threshold = map(thresholdPin.readSmoothed(), 0, 1023, 1, 10000L);
+  // Serial.print("threshold ");
+  // Serial.println(threshold);
+  button1.setThreshold(threshold);
+}
+
 void setup()
 {
   // put your setup code here, to run once:
@@ -160,11 +173,24 @@ void setup()
   // cs_4_2.set_CS_AutocaL_Millis(0xFFFFFFFF);
   // cs_4_2.set_CS_AutocaL_Millis(300);
   button1.configureButton(configureCapacitiveButton);
-  button1.setThreshold(2500); // More sensitive
+
+  pinMode(THRESHOLD_PIN, INPUT);
+  thresholdPin.setSmoothWeight(8);
+
+setButtonThreshold();
+  // button1.setThreshold(2500); // More sensitive
   button1.setNumberOfSamples(25);
   button1.onPress(onButtonPressed);
-  button1.onRelease(10, 3000 - 100, onReleaseCallbackFunction);
-  button1.onHold(3000, onHoldCallbackFunction);
+  if (button1.onRelease(10, 3000 - 100, onReleaseCallbackFunction) != attSuccessful)
+  {
+    Serial.print("Button attach onRelease callback failed");
+    return;
+  }
+  if (button1.onHold(3000, onHoldCallbackFunction) != attSuccessful)
+  {
+    Serial.print("Button attach onHold callback failed");
+    return;
+  }
 
   pinMode(LED_PIN, OUTPUT);
   pinMode(BUZZER_PIN, OUTPUT);
@@ -192,12 +218,10 @@ void setup()
 }
 
 char buf[10];
-int randNumber;
-
 void dispNumber(int number)
 {
-  Serial.print("Disp number ");
-  Serial.print(number);
+  // Serial.print("Disp number ");
+  // Serial.print(number);
   // consider use of this every %10 laps, but then consider font.setColor(COLORED, UNCOLORED) near line 106
   epd.clearFrameMemory(0xFF); // bit set = white, bit reset = black
 
@@ -236,11 +260,12 @@ void dispNumber(int number)
     font.setScale(2, 2);
     font.printStr(ALIGN_CENTER, 20, "out of range");
   }
-  Serial.println(" OK");
+  // Serial.println(" OK");
   epd.displayFrame();
 }
 
 void loop()
 {
+  setButtonThreshold();
   button1.update();
 }
