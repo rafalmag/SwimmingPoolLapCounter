@@ -13,11 +13,12 @@
 
 - active buzzer (3.3-5V VCC (2mA when it beeps), GND, IN=3.3V)
  Consider: on/off toggle (hardware switch and maybe 600-1000Ohm variable resistor for VCC to adjust buzzer volume)
+ IO pin connected via D4 .
 
 ![buzzer top](docs/buzzer1.png "buzzer top")
 ![buzzer bottom](docs/buzzer2.png "buzzer bottom")
 
- - red 5mm led (2.2V, 10mA) (nano can output 40mA per IO pin, so it would be ok)
+ - red 5mm led (2.2V, 10mA) (nano can output 40mA per IO pin, so it would be ok), connected via 150Ohm resistor to D5
 
  - small powerbank (with 18650 battery, USB charging input and output - to power the nano and PCB)
 
@@ -45,6 +46,8 @@ If "pressed" for a long time (>3 sec) it resets the counter.
 Configuration is available by:
 - beeper volume - by potentiometer
 - LED brightness - by potentiometer
+- touch sensing sensitivity threshold - by potentiometer
+- touch sensing resistor - by potentiometer / dip switch
 - dip switch to set if the increments should be by 1 or 2 laps per button press
 
 ## Knows issues:

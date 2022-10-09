@@ -21,6 +21,10 @@ unsigned char image[1024];
 EPDPaint paint(image, 0, 0); // width should be the multiple of 8
 EPD1in54 epd;                // default reset: 8, dc: 9, cs: 10, busy: 7
 
+#define BUZZER_PIN 4
+#define LED_PIN 5
+
+// screen size
 #define SCR_WD 200
 #define SCR_HT 200
 
@@ -96,6 +100,10 @@ void setup()
   // put your setup code here, to run once:
   Serial.begin(9600);
 
+  
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+
   if (epd.init(lutFullUpdate) != 0)
   {
     Serial.print("e-Paper init failed");
@@ -122,6 +130,8 @@ int randNumber;
 void loop()
 {
   Serial.print("\nNew value:");
+digitalWrite(LED_PIN, HIGH); // LED on
+digitalWrite(BUZZER_PIN, HIGH); // buzzer on
 
 // consider use of this every %10 laps, but then consider font.setColor(COLORED, UNCOLORED) near line 106
   epd.clearFrameMemory(0xFF); // bit set = white, bit reset = black
@@ -165,5 +175,7 @@ void loop()
   }
   Serial.print(" OK");
   epd.displayFrame();
+  digitalWrite(LED_PIN, LOW); // LED off
+  digitalWrite(BUZZER_PIN, LOW); // buzzer on
   delay(2000);
 }
