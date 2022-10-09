@@ -6,6 +6,11 @@
 #include "RREFont.h"
 #include "rre_term_10x16.h"
 
+#include <CapacitiveSensor.h>
+#include <Button.h>
+#include <ButtonEventCallback.h>
+#include <CapacitiveButton.h>
+
 RREFont font;
 
 #define COLORED 0
@@ -21,12 +26,20 @@ unsigned char image[1024];
 EPDPaint paint(image, 0, 0); // width should be the multiple of 8
 EPD1in54 epd;                // default reset: 8, dc: 9, cs: 10, busy: 7
 
+// D4 and D5
 #define BUZZER_PIN 4
 #define LED_PIN 5
+
+// A4 and A5
+CapacitiveSensor   cs_4_2 = CapacitiveSensor(A4,A2);
+
+// CapacitiveButton button1 = CapacitiveButton(A4, A2);
 
 // screen size
 #define SCR_WD 200
 #define SCR_HT 200
+
+int lapCount = 0;
 
 void customRect(int x, int y, int w, int h, int c)
 {
@@ -95,11 +108,37 @@ void rmInit()
   epd.displayFrame();
 }
 
+// Use this function to configure the internal CapSense object to suit you. See the documentation at: http://playground.arduino.cc/Main/CapacitiveSensor
+// This function can be left out if the defaults are acceptable - just don't call configureButton
+void configureCapacitiveButton(CapacitiveSensor& capSense){
+
+        // Set the capacitive sensor to timeout after 300ms
+        capSense.set_CS_Timeout_Millis(300);
+        // Set the capacitive sensor to auto-calibrate every 10secs
+        capSense.set_CS_AutocaL_Millis(10000);
+}
+
+// btn is a reference to the button that fired the event. That means you can use the same event handler for many buttons
+void onButtonPressed(Button& btn){
+lapCount++;
+        Serial.print("button pressed ");
+        Serial.println(lapCount);
+
+}
+
 void setup()
 {
   // put your setup code here, to run once:
   Serial.begin(9600);
 
+  cs_4_2.set_CS_AutocaL_Millis(6000);
+
+  // cs_4_2.set_CS_AutocaL_Millis(0xFFFFFFFF);
+  // cs_4_2.set_CS_AutocaL_Millis(300);
+  // button1.configureButton(configureCapacitiveButton);
+  // button1.setThreshold(4000);      // More sensitive
+  // button1.setNumberOfSamples(30);
+  // button1.onPress(onButtonPressed);
   
   pinMode(LED_PIN, OUTPUT);
   pinMode(BUZZER_PIN, OUTPUT);
@@ -129,9 +168,31 @@ int randNumber;
 
 void loop()
 {
+long start = millis();
+    long total1 =  cs_4_2.capacitiveSensor(25);
+
+    Serial.print(millis() - start);        // check on performance in milliseconds
+    Serial.print("ms \t");                    // tab character for debug windown spacing
+
+    Serial.println(total1);
+    if(total1>3000){
+      digitalWrite(LED_PIN, HIGH); // LED on
+     delay(250);   
+      digitalWrite(LED_PIN, LOW); // LED off
+      delay(250);   
+    }
+
+     delay(20);  
+
+
+  // button1.update();
+                           // arbitrary delay to limit data to serial port 
+
+/*  
   Serial.print("\nNew value:");
 digitalWrite(LED_PIN, HIGH); // LED on
 digitalWrite(BUZZER_PIN, HIGH); // buzzer on
+
 
 // consider use of this every %10 laps, but then consider font.setColor(COLORED, UNCOLORED) near line 106
   epd.clearFrameMemory(0xFF); // bit set = white, bit reset = black
@@ -177,5 +238,6 @@ digitalWrite(BUZZER_PIN, HIGH); // buzzer on
   epd.displayFrame();
   digitalWrite(LED_PIN, LOW); // LED off
   digitalWrite(BUZZER_PIN, LOW); // buzzer on
-  delay(2000);
+  delay(3000);
+  */
 }
