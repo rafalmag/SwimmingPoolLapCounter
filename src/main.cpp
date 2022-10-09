@@ -31,9 +31,9 @@ EPD1in54 epd;                // default reset: 8, dc: 9, cs: 10, busy: 7
 #define LED_PIN 5
 
 // A4 and A5
-CapacitiveSensor   cs_4_2 = CapacitiveSensor(A4,A2);
+// CapacitiveSensor   cs_4_2 = CapacitiveSensor(A4,A2);
 
-// CapacitiveButton button1 = CapacitiveButton(A4, A2);
+CapacitiveButton button1 = CapacitiveButton(A4, A2);
 
 // screen size
 #define SCR_WD 200
@@ -110,20 +110,44 @@ void rmInit()
 
 // Use this function to configure the internal CapSense object to suit you. See the documentation at: http://playground.arduino.cc/Main/CapacitiveSensor
 // This function can be left out if the defaults are acceptable - just don't call configureButton
-void configureCapacitiveButton(CapacitiveSensor& capSense){
+void configureCapacitiveButton(CapacitiveSensor &capSense)
+{
 
-        // Set the capacitive sensor to timeout after 300ms
-        capSense.set_CS_Timeout_Millis(300);
-        // Set the capacitive sensor to auto-calibrate every 10secs
-        capSense.set_CS_AutocaL_Millis(10000);
+  // Set the capacitive sensor to timeout after 300ms
+  capSense.set_CS_Timeout_Millis(300);
+  // Set the capacitive sensor to auto-calibrate every 10secs
+  capSense.set_CS_AutocaL_Millis(6000);
 }
+void dispNumber(int number);
 
 // btn is a reference to the button that fired the event. That means you can use the same event handler for many buttons
-void onButtonPressed(Button& btn){
-lapCount++;
-        Serial.print("button pressed ");
-        Serial.println(lapCount);
+void onButtonPressed(Button &btn)
+{
+  digitalWrite(LED_PIN, HIGH);    // LED on
+  digitalWrite(BUZZER_PIN, HIGH); // buzzer on
+}
 
+void onReleaseCallbackFunction(Button &btn, uint_least16_t duration)
+{
+  lapCount++;
+  Serial.print("button pressed ");
+  Serial.println(lapCount);
+  digitalWrite(BUZZER_PIN, LOW); // buzzer off
+  dispNumber(lapCount);
+  digitalWrite(LED_PIN, LOW); // LED off
+  delay(250);
+}
+
+void onHoldCallbackFunction(Button &btn, uint_least16_t duration)
+{
+  digitalWrite(BUZZER_PIN, LOW); // buzzer off
+  // btn is a reference to the button that was held
+  // duration is how long the button was held for
+  Serial.println("button LONG pressed ");
+  lapCount = 0;
+  dispNumber(lapCount);
+  digitalWrite(LED_PIN, LOW); // LED off
+  delay(250);
 }
 
 void setup()
@@ -131,15 +155,17 @@ void setup()
   // put your setup code here, to run once:
   Serial.begin(9600);
 
-  cs_4_2.set_CS_AutocaL_Millis(6000);
+  // cs_4_2.set_CS_AutocaL_Millis(6000);
 
   // cs_4_2.set_CS_AutocaL_Millis(0xFFFFFFFF);
   // cs_4_2.set_CS_AutocaL_Millis(300);
-  // button1.configureButton(configureCapacitiveButton);
-  // button1.setThreshold(4000);      // More sensitive
-  // button1.setNumberOfSamples(30);
-  // button1.onPress(onButtonPressed);
-  
+  button1.configureButton(configureCapacitiveButton);
+  button1.setThreshold(2500); // More sensitive
+  button1.setNumberOfSamples(25);
+  button1.onPress(onButtonPressed);
+  button1.onRelease(10, 3000 - 100, onReleaseCallbackFunction);
+  button1.onHold(3000, onHoldCallbackFunction);
+
   pinMode(LED_PIN, OUTPUT);
   pinMode(BUZZER_PIN, OUTPUT);
 
@@ -161,83 +187,60 @@ void setup()
   // different seed numbers each time the sketch runs.
   // randomSeed() will then shuffle the random function.
   randomSeed(analogRead(0));
+
+  dispNumber(0);
 }
 
 char buf[10];
 int randNumber;
 
-void loop()
+void dispNumber(int number)
 {
-long start = millis();
-    long total1 =  cs_4_2.capacitiveSensor(25);
-
-    Serial.print(millis() - start);        // check on performance in milliseconds
-    Serial.print("ms \t");                    // tab character for debug windown spacing
-
-    Serial.println(total1);
-    if(total1>3000){
-      digitalWrite(LED_PIN, HIGH); // LED on
-     delay(250);   
-      digitalWrite(LED_PIN, LOW); // LED off
-      delay(250);   
-    }
-
-     delay(20);  
-
-
-  // button1.update();
-                           // arbitrary delay to limit data to serial port 
-
-/*  
-  Serial.print("\nNew value:");
-digitalWrite(LED_PIN, HIGH); // LED on
-digitalWrite(BUZZER_PIN, HIGH); // buzzer on
-
-
-// consider use of this every %10 laps, but then consider font.setColor(COLORED, UNCOLORED) near line 106
+  Serial.print("Disp number ");
+  Serial.print(number);
+  // consider use of this every %10 laps, but then consider font.setColor(COLORED, UNCOLORED) near line 106
   epd.clearFrameMemory(0xFF); // bit set = white, bit reset = black
 
-  randNumber = random(1, 6); // inclusive, exclusive
-  memset(buf, 0x00, sizeof(buf));
-  if (randNumber == 1)
+  itoa(number, buf, 10);
+
+  if (0 <= number && number <= 9)
   {
-    itoa(random(1, 4), buf, 10);
-    Serial.print(buf);
     font.setFont(&rre_term_10x16); // set font resets spacing
     font.setScale(10, 10);
     font.printStr(ALIGN_CENTER, 20, buf);
   }
-  else if (randNumber == 2 || randNumber == 5)
+  else if (10 <= number && number <= 99)
   {
-    itoa(random(10, 99), buf, 10);
-    Serial.print(buf);
     font.setFont(&rre_term_10x16);
     font.setScale(8);
-    font.setSpacing(4); 
+    font.setSpacing(4);
     font.printStr(ALIGN_CENTER, 40, buf);
   }
-  else if (randNumber == 3)
+  else if (100 <= number && number <= 999)
   {
-    itoa(random(100, 999), buf, 10);
-    Serial.print(buf);
     font.setFont(&rre_term_10x16);
     font.setScale(5, 7);
     font.setSpacing(4);
     font.printStr(ALIGN_CENTER, 52, buf);
   }
-  else if (randNumber == 4)
+  else if (1000 <= number && number <= 9999)
   {
-    itoa(random(1000, 9999), buf, 10);
-    Serial.print(buf);
     font.setFont(&rre_term_10x16);
     font.setScale(4, 6);
     font.setSpacing(4);
     font.printStr(ALIGN_CENTER, 48, buf);
   }
-  Serial.print(" OK");
+  else
+  {
+    font.setFont(&rre_term_10x16); // set font resets spacing
+    font.setScale(2, 2);
+    font.printStr(ALIGN_CENTER, 20, "out of range");
+  }
+  Serial.println(" OK");
   epd.displayFrame();
-  digitalWrite(LED_PIN, LOW); // LED off
-  digitalWrite(BUZZER_PIN, LOW); // buzzer on
-  delay(3000);
-  */
+}
+
+void loop()
+{
+  button1.update();
 }
