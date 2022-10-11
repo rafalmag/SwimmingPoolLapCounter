@@ -44,8 +44,8 @@ The capacitive sensor if "pressed" for a short time increments the lap count, em
 If "pressed" for a long time (>3 sec) it resets the counter.
 
 Configuration is available by:
-- beeper volume - by potentiometer (1-2k)
-- LED brightness - by potentiometer
+- beeper volume - by potentiometer (1k)
+- LED brightness - by potentiometer (?)
 - touch sensing sensitivity threshold - by potentiometer
 - touch sensing resistor - by potentiometer / dip switch
 - dip switch to set if the increments should be by 1 or 2 laps per button press

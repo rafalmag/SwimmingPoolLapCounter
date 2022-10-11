@@ -28,16 +28,16 @@ EPDPaint paint(image, 0, 0); // width should be the multiple of 8
 EPD1in54 epd;                // default reset: 8, dc: 9, cs: 10, busy: 7
 
 // D4 and D5
-#define BUZZER_PIN 4
-#define LED_PIN 5
+#define BUZZER_PIN PIN4
+#define LED_PIN PIN5
 
-#define THRESHOLD_PIN A3
+#define THRESHOLD_PIN A4
 AnalogPin thresholdPin(THRESHOLD_PIN);
 
-// A4 and A5
-// CapacitiveSensor   cs_4_2 = CapacitiveSensor(A4,A2);
+#define TWO_LAP_MODE_PIN A0
+#define UNUSED_TOGGLE_PIN A1
 
-CapacitiveButton button1 = CapacitiveButton(A4, A2);
+CapacitiveButton capacitiveButton = CapacitiveButton(A2, A3);
 
 // screen size
 #define SCR_WD 200
@@ -112,6 +112,18 @@ void rmInit()
   epd.displayFrame();
 }
 
+void incrementLapCount()
+{
+  if (digitalRead(TWO_LAP_MODE_PIN) == HIGH)
+  {
+    lapCount += 2;
+  }
+  else
+  {
+    lapCount++;
+  }
+}
+
 // Use this function to configure the internal CapSense object to suit you. See the documentation at: http://playground.arduino.cc/Main/CapacitiveSensor
 // This function can be left out if the defaults are acceptable - just don't call configureButton
 void configureCapacitiveButton(CapacitiveSensor &capSense)
@@ -132,7 +144,7 @@ void onButtonPressed(Button &btn)
 
 void onReleaseCallbackFunction(Button &btn, uint_least16_t duration)
 {
-  lapCount++;
+  incrementLapCount();
   Serial.print("button pressed ");
   Serial.println(lapCount);
   digitalWrite(BUZZER_PIN, LOW); // buzzer off
@@ -153,47 +165,41 @@ void onHoldCallbackFunction(Button &btn, uint_least16_t duration)
   delay(250);
 }
 
-
 long threshold;
 void setButtonThreshold()
 {
   threshold = map(thresholdPin.readSmoothed(), 0, 1023, 1, 10000L);
   // Serial.print("threshold ");
   // Serial.println(threshold);
-  button1.setThreshold(threshold);
+  capacitiveButton.setThreshold(threshold);
 }
 
 void setup()
 {
+  pinMode(THRESHOLD_PIN, INPUT);
+  pinMode(UNUSED_TOGGLE_PIN, INPUT_PULLUP);
+  pinMode(TWO_LAP_MODE_PIN, INPUT_PULLUP);
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
   // put your setup code here, to run once:
   Serial.begin(9600);
+  capacitiveButton.configureButton(configureCapacitiveButton);
 
-  // cs_4_2.set_CS_AutocaL_Millis(6000);
-
-  // cs_4_2.set_CS_AutocaL_Millis(0xFFFFFFFF);
-  // cs_4_2.set_CS_AutocaL_Millis(300);
-  button1.configureButton(configureCapacitiveButton);
-
-  pinMode(THRESHOLD_PIN, INPUT);
   thresholdPin.setSmoothWeight(8);
+  setButtonThreshold();
 
-setButtonThreshold();
-  // button1.setThreshold(2500); // More sensitive
-  button1.setNumberOfSamples(25);
-  button1.onPress(onButtonPressed);
-  if (button1.onRelease(10, 3000 - 100, onReleaseCallbackFunction) != attSuccessful)
+  capacitiveButton.setNumberOfSamples(25);
+  capacitiveButton.onPress(onButtonPressed);
+  if (capacitiveButton.onRelease(10, 3000 - 100, onReleaseCallbackFunction) != attSuccessful)
   {
     Serial.print("Button attach onRelease callback failed");
     return;
   }
-  if (button1.onHold(3000, onHoldCallbackFunction) != attSuccessful)
+  if (capacitiveButton.onHold(3000, onHoldCallbackFunction) != attSuccessful)
   {
     Serial.print("Button attach onHold callback failed");
     return;
   }
-
-  pinMode(LED_PIN, OUTPUT);
-  pinMode(BUZZER_PIN, OUTPUT);
 
   if (epd.init(lutFullUpdate) != 0)
   {
@@ -207,12 +213,6 @@ setButtonThreshold();
   font.setFont(&rre_term_10x16);
 
   // rmInit();
-
-  // if analog input pin 0 is unconnected, random analog
-  // noise will cause the call to randomSeed() to generate
-  // different seed numbers each time the sketch runs.
-  // randomSeed() will then shuffle the random function.
-  randomSeed(analogRead(0));
 
   dispNumber(0);
 }
@@ -267,5 +267,5 @@ void dispNumber(int number)
 void loop()
 {
   setButtonThreshold();
-  button1.update();
+  capacitiveButton.update();
 }
