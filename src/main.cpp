@@ -44,6 +44,9 @@ CapacitiveButton capacitiveButton = CapacitiveButton(A2, A3);
 #define SCR_HT 200
 
 int lapCount = 0;
+#define MINIMUM_LAP_INCREMENT_INTERVAL_MS 5000L
+unsigned long lastLapIncrement = millis() - MINIMUM_LAP_INCREMENT_INTERVAL_MS;
+boolean canIncrement = false;
 
 void customRect(int x, int y, int w, int h, int c)
 {
@@ -122,6 +125,7 @@ void incrementLapCount()
   {
     lapCount++;
   }
+  lastLapIncrement = millis();
 }
 
 // Use this function to configure the internal CapSense object to suit you. See the documentation at: http://playground.arduino.cc/Main/CapacitiveSensor
@@ -138,19 +142,34 @@ void dispNumber(int number);
 // btn is a reference to the button that fired the event. That means you can use the same event handler for many buttons
 void onButtonPressed(Button &btn)
 {
-  digitalWrite(LED_PIN, HIGH);    // LED on
-  digitalWrite(BUZZER_PIN, HIGH); // buzzer on
+  if (lastLapIncrement + MINIMUM_LAP_INCREMENT_INTERVAL_MS < millis())
+  {
+    digitalWrite(LED_PIN, HIGH);    // LED on
+    digitalWrite(BUZZER_PIN, HIGH); // buzzer on
+    canIncrement = true;
+  }
 }
 
 void onReleaseCallbackFunction(Button &btn, uint_least16_t duration)
 {
-  incrementLapCount();
-  Serial.print("button pressed ");
-  Serial.println(lapCount);
-  digitalWrite(BUZZER_PIN, LOW); // buzzer off
-  dispNumber(lapCount);
-  digitalWrite(LED_PIN, LOW); // LED off
-  delay(250);
+  if (canIncrement)
+  {
+    incrementLapCount();
+    Serial.print("button pressed ");
+    Serial.println(lapCount);
+    digitalWrite(BUZZER_PIN, LOW); // buzzer off
+    dispNumber(lapCount);
+    digitalWrite(LED_PIN, LOW); // LED off
+    canIncrement = false;
+    delay(250);
+  }
+  else
+  {
+    Serial.print("button pressed within MINIMUM_LAP_INCREMENT_INTERVAL_MS, lap count = ");
+    Serial.println(lapCount);
+    digitalWrite(BUZZER_PIN, LOW); // buzzer off
+    digitalWrite(LED_PIN, LOW); // LED off
+  }
 }
 
 void onHoldCallbackFunction(Button &btn, uint_least16_t duration)

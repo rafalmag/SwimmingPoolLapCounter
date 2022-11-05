@@ -27,8 +27,8 @@ Configuration options:
 - LED brightness - by potentiometer (1k Ohm)
 - touch sensing sensitivity threshold - by potentiometer (10k Ohm)
 - (fixed) touch sensing resistor (20M Ohm) ~~- by potentiometer / dip switch~~ (idea abandoned - in practice dip switch and pot caused too much noise)
-- increment counter by 2 mode - dip switch (if off increment by 1)
-- 5s delay mode - dip switch (if enabled ignore touches for the next 5 sec since the last increment)
+- increment counter by 2 mode - dip switch (by default increment by 1)
+- 5s minimum lap increment interval - dip switch (by default - about 500ms)
 
 ## Hardware:
 - Arduino Nano
