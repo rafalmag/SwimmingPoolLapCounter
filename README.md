@@ -1,4 +1,34 @@
-# SwimmingPoolLapCounter
+# Swimming Pool Lap Counter
+
+Swimming pool lap counter is a device for swimmers, so when practicing swimming in the pool they can easily count how many laps did they swim. 
+
+The design requirements and solutions:
+- battery powered  (powered by single cell 18650 powerbank)
+- waterproof (fits into watertight food box)
+- easy to trigger count increments (by capacitive touch sensing)
+- lap count displayed and visible in bright sunlight (eInk display)
+- lap increment trigger acknowledged (by buzzer and led)
+- ability to reset counter without opening the box
+- configuration should not interfere with main use case (lap count) and should not be triggered by mistake.
+
+## Prototype
+
+The ground wire should be grounded.
+The blue wire should be connected to aluminum foil to sense touches.
+
+## User interface
+
+After starting the device the lap count resets to 0.
+The capacitive sensor if "pressed" (senses touch) for a short time increments the lap count, emits sound and lights LED.
+If "pressed" for a long time (>3 sec) it resets the counter.
+
+Configuration options:
+- beeper volume - by potentiometer (1k Ohm)
+- LED brightness - by potentiometer (1k Ohm)
+- touch sensing sensitivity threshold - by potentiometer (10k Ohm)
+- (fixed) touch sensing resistor (20M Ohm) ~~- by potentiometer / dip switch~~ (idea abandoned - in practice dip switch and pot caused too much noise)
+- increment counter by 2 mode - dip switch (if off increment by 1)
+- 5s delay mode - dip switch (if enabled ignore touches for the next 5 sec since the last increment)
 
 ## Hardware:
 - Arduino Nano
@@ -37,29 +67,21 @@
 
 ![wiring](docs/guide-wiring-eink-epaper-module-schematics-diagram-14core-768x633.jpg "wiring")
 
-## User interface
+## Schematic
 
-After starting the device the lap count resets to 0.
-The capacitive sensor if "pressed" for a short time increments the lap count, emits sound and lights LED.
-If "pressed" for a long time (>3 sec) it resets the counter.
+![schematic](docs/lapcounter_schem.png "schematic")
 
-Configuration is available by:
-- beeper volume - by potentiometer (1k)
-- LED brightness - by potentiometer (?)
-- touch sensing sensitivity threshold - by potentiometer
-- touch sensing resistor - by potentiometer / dip switch
-- dip switch to set if the increments should be by 1 or 2 laps per button press
+## PCB design
+
+PCB is based on prototype board 70 x 50mm with THT components soldered on top and SMD on bottom. 
+The SMD resistor can be replaced with THT one in vertical mode.
+
+![pcb](docs/lapcounter_pcb-top.png "pcb")
+
 
 ## Knows issues:
-- the EPD library updates the screen in blocks that are multiplications of 8 pixels, but the RRE fonts lib is using blocks of different sizes. This causes minor glitches in the rendered fonts. Because of that issue I did not even tried to use antialiased fonts.
+- the EPD library updates the screen in blocks that are multiplications of 8 pixels, but the RRE fonts lib is using blocks of different sizes. This causes minor glitches in the rendered fonts. Because of that issue I did not even tried to use antialiased fonts, but thanks to eInk high resolution the numbers are still readable
 
-## TO DO list:
-- implement LED
-- implement beeper
-- implement capacitive touch interface
-- implement the reset (long press)
-- add resistors for LEDs (3V => 2.2V and brightness regulation), beeper IO (1k)
-- schematics with wiring
-- PCB design 
+## TO DO ideas:
 - deep sleep mode (think about user interface for waking up, putting to sleep)
 - low battery warning (?)
