@@ -35,7 +35,7 @@ EPD1in54 epd;                // default reset: 8, dc: 9, cs: 10, busy: 7
 AnalogPin thresholdPin(THRESHOLD_PIN);
 
 #define TWO_LAP_MODE_PIN A0
-#define UNUSED_TOGGLE_PIN A1
+#define MINIMUM_LAP_INCREMENT_INTERVAL_MODE_PIN A1
 
 CapacitiveButton capacitiveButton = CapacitiveButton(A2, A3);
 
@@ -117,7 +117,7 @@ void rmInit()
 
 void incrementLapCount()
 {
-  if (digitalRead(TWO_LAP_MODE_PIN) == HIGH)
+  if (digitalRead(TWO_LAP_MODE_PIN) == LOW)
   {
     lapCount += 2;
   }
@@ -142,7 +142,7 @@ void dispNumber(int number);
 // btn is a reference to the button that fired the event. That means you can use the same event handler for many buttons
 void onButtonPressed(Button &btn)
 {
-  if (lastLapIncrement + MINIMUM_LAP_INCREMENT_INTERVAL_MS < millis())
+  if (lastLapIncrement + MINIMUM_LAP_INCREMENT_INTERVAL_MS < millis() || digitalRead(MINIMUM_LAP_INCREMENT_INTERVAL_MODE_PIN) == HIGH)
   {
     digitalWrite(LED_PIN, HIGH);    // LED on
     digitalWrite(BUZZER_PIN, HIGH); // buzzer on
@@ -152,7 +152,7 @@ void onButtonPressed(Button &btn)
 
 void onReleaseCallbackFunction(Button &btn, uint_least16_t duration)
 {
-  if (canIncrement)
+  if (canIncrement || digitalRead(MINIMUM_LAP_INCREMENT_INTERVAL_MODE_PIN) == HIGH)
   {
     incrementLapCount();
     Serial.print("button pressed ");
@@ -169,19 +169,40 @@ void onReleaseCallbackFunction(Button &btn, uint_least16_t duration)
     Serial.println(lapCount);
     digitalWrite(BUZZER_PIN, LOW); // buzzer off
     digitalWrite(LED_PIN, LOW); // LED off
+    //blink x2
+    digitalWrite(LED_PIN, HIGH); // LED on
+    delay(150);
+    digitalWrite(LED_PIN, LOW); // LED off
+    delay(150);
+    digitalWrite(LED_PIN, HIGH); // LED on
+    delay(150);
+    digitalWrite(LED_PIN, LOW); // LED off
   }
 }
 
+// btn is a reference to the button that was held
+// duration is how long the button was held for
 void onHoldCallbackFunction(Button &btn, uint_least16_t duration)
 {
   digitalWrite(BUZZER_PIN, LOW); // buzzer off
-  // btn is a reference to the button that was held
-  // duration is how long the button was held for
-  Serial.println("button LONG pressed ");
-  lapCount = 0;
-  dispNumber(lapCount);
-  digitalWrite(LED_PIN, LOW); // LED off
-  delay(250);
+  if (canIncrement || digitalRead(MINIMUM_LAP_INCREMENT_INTERVAL_MODE_PIN) == HIGH){
+    Serial.println("button LONG pressed ");
+    lapCount = 0;
+    dispNumber(lapCount);
+    digitalWrite(LED_PIN, LOW); // LED off
+    delay(250);
+  } else {
+    digitalWrite(LED_PIN, LOW); // LED off
+    delay(100);
+    //blink x2
+    digitalWrite(LED_PIN, HIGH); // LED on
+    delay(150);
+    digitalWrite(LED_PIN, LOW); // LED off
+    delay(150);
+    digitalWrite(LED_PIN, HIGH); // LED on
+    delay(150);
+    digitalWrite(LED_PIN, LOW); // LED off
+  }
 }
 
 long threshold;
@@ -196,7 +217,7 @@ void setButtonThreshold()
 void setup()
 {
   pinMode(THRESHOLD_PIN, INPUT);
-  pinMode(UNUSED_TOGGLE_PIN, INPUT_PULLUP);
+  pinMode(MINIMUM_LAP_INCREMENT_INTERVAL_MODE_PIN, INPUT_PULLUP);
   pinMode(TWO_LAP_MODE_PIN, INPUT_PULLUP);
   pinMode(LED_PIN, OUTPUT);
   pinMode(BUZZER_PIN, OUTPUT);
